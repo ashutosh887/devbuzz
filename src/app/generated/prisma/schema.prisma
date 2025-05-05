@@ -1,0 +1,38 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id         Int      @id @default(autoincrement())
+  email      String   @unique
+  name       String?
+  posts      Post[]
+  otp        OTP?
+  isVerified Boolean  @default(false) // Whether the user is verified via OTP
+  createdAt  DateTime @default(now()) // Record creation time
+  updatedAt  DateTime @updatedAt // Auto-updated timestamp
+}
+
+model Post {
+  id        Int     @id @default(autoincrement())
+  title     String
+  content   String?
+  published Boolean @default(false)
+  authorId  Int
+  author    User    @relation(fields: [authorId], references: [id])
+}
+
+model OTP {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @unique
+  user      User     @relation(fields: [userId], references: [id])
+  otpCode   String // Store hashed OTP
+  expiresAt DateTime // OTP expiry time
+  createdAt DateTime @default(now()) // OTP creation time
+}
