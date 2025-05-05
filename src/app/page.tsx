@@ -41,7 +41,6 @@ export default function Home() {
       toast.success("OTP sent successfully!");
       setStep("otp");
     } catch (err) {
-      // Handle error correctly without any type casting
       if (err instanceof Error) {
         toast.error(err.message || "Something went wrong");
       } else {
@@ -73,7 +72,6 @@ export default function Home() {
       toast.success("OTP verified successfully!");
       router.push("/dashboard");
     } catch (err) {
-      // Handle error correctly without any type casting
       if (err instanceof Error) {
         toast.error(err.message || "Verification failed");
       } else {
@@ -86,10 +84,10 @@ export default function Home() {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-4 text-center">
-      <h1 className="text-3xl font-bold">{config.appName}</h1>
+      <h1 className="text-3xl font-bold mb-2">{config.appName}</h1>
       <h2 className="text-lg text-muted-foreground mb-4">{config.appTitle}</h2>
 
-      <div className="w-full max-w-sm space-y-4">
+      <div className="w-full max-w-sm space-y-4 m-2">
         {step === "email" && (
           <div className="space-y-4">
             <Input
