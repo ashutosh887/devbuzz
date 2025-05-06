@@ -14,7 +14,6 @@ import config from "@/config";
 
 export default function Home() {
   const router = useRouter();
-
   const [email, setEmail] = useState<string>("");
   const [step, setStep] = useState<"email" | "otp">("email");
   const [loading, setLoading] = useState<boolean>(false);
@@ -22,11 +21,10 @@ export default function Home() {
 
   const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
-  const handleGetStarted = async (): Promise<void> => {
+  const handleGetStarted = async () => {
     if (!isValidEmail) return;
 
     setLoading(true);
-
     try {
       const res = await fetch("/api/auth/send-otp", {
         method: "POST",
@@ -48,11 +46,10 @@ export default function Home() {
     }
   };
 
-  const handleOtpSubmit = async (): Promise<void> => {
+  const handleOtpSubmit = async () => {
     if (otp.length !== 6) return;
 
     setLoading(true);
-
     try {
       const res = await fetch("/api/auth/verify-otp", {
         method: "POST",
@@ -63,8 +60,14 @@ export default function Home() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Invalid OTP");
 
+      localStorage.setItem("session", JSON.stringify(data.user));
+
       toast.success("OTP verified successfully!");
-      router.push("/dashboard");
+      if (data.user.name) {
+        router.push("/dashboard");
+      } else {
+        router.push("/onboarding");
+      }
     } catch (err) {
       toast.error(
         err instanceof Error ? err.message : "Unknown error occurred"
@@ -81,7 +84,7 @@ export default function Home() {
 
       <div className="w-full max-w-sm space-y-4 m-2">
         {step === "email" && (
-          <div className="space-y-4">
+          <>
             <Input
               type="email"
               placeholder="Enter your email"
@@ -102,11 +105,11 @@ export default function Home() {
             >
               {loading ? "Sending OTP..." : "Get Started"}
             </Button>
-          </div>
+          </>
         )}
 
         {step === "otp" && (
-          <div className="flex flex-col items-center justify-center space-y-6">
+          <>
             <InputOTP
               maxLength={6}
               value={otp}
@@ -130,7 +133,6 @@ export default function Home() {
                 <InputOTPSlot index={5} />
               </InputOTPGroup>
             </InputOTP>
-
             <Button
               className="w-full"
               onClick={handleOtpSubmit}
@@ -138,7 +140,7 @@ export default function Home() {
             >
               {loading ? "Verifying..." : "Submit"}
             </Button>
-          </div>
+          </>
         )}
       </div>
     </div>

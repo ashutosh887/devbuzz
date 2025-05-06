@@ -16,8 +16,18 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // TODO: Replace with real OTP verification logic
-    return NextResponse.json({ success: true, message: "OTP verified" });
+    const mockUser = {
+      id: 1,
+      email: "demo@example.com",
+      name: null,
+      isVerified: true,
+    };
+
+    return NextResponse.json({
+      success: true,
+      message: "OTP verified",
+      user: mockUser,
+    });
   } catch (err) {
     console.error("Error in verify-otp:", err);
     return NextResponse.json(
