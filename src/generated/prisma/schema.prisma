@@ -1,6 +1,6 @@
 generator client {
   provider = "prisma-client-js"
-  output   = "../src/app/generated/prisma"
+  output   = "../src/generated/prisma"
 }
 
 datasource db {
@@ -12,6 +12,7 @@ model User {
   id         Int      @id @default(autoincrement())
   email      String   @unique
   name       String?
+  username   String?  @unique
   posts      Post[]
   otp        OTP?
   isVerified Boolean  @default(false) // Whether the user is verified via OTP

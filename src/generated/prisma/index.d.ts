@@ -1105,6 +1105,7 @@ export namespace Prisma {
     id: number | null
     email: string | null
     name: string | null
+    username: string | null
     isVerified: boolean | null
     createdAt: Date | null
     updatedAt: Date | null
@@ -1114,6 +1115,7 @@ export namespace Prisma {
     id: number | null
     email: string | null
     name: string | null
+    username: string | null
     isVerified: boolean | null
     createdAt: Date | null
     updatedAt: Date | null
@@ -1123,6 +1125,7 @@ export namespace Prisma {
     id: number
     email: number
     name: number
+    username: number
     isVerified: number
     createdAt: number
     updatedAt: number
@@ -1142,6 +1145,7 @@ export namespace Prisma {
     id?: true
     email?: true
     name?: true
+    username?: true
     isVerified?: true
     createdAt?: true
     updatedAt?: true
@@ -1151,6 +1155,7 @@ export namespace Prisma {
     id?: true
     email?: true
     name?: true
+    username?: true
     isVerified?: true
     createdAt?: true
     updatedAt?: true
@@ -1160,6 +1165,7 @@ export namespace Prisma {
     id?: true
     email?: true
     name?: true
+    username?: true
     isVerified?: true
     createdAt?: true
     updatedAt?: true
@@ -1256,6 +1262,7 @@ export namespace Prisma {
     id: number
     email: string
     name: string | null
+    username: string | null
     isVerified: boolean
     createdAt: Date
     updatedAt: Date
@@ -1284,6 +1291,7 @@ export namespace Prisma {
     id?: boolean
     email?: boolean
     name?: boolean
+    username?: boolean
     isVerified?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -1296,6 +1304,7 @@ export namespace Prisma {
     id?: boolean
     email?: boolean
     name?: boolean
+    username?: boolean
     isVerified?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -1305,6 +1314,7 @@ export namespace Prisma {
     id?: boolean
     email?: boolean
     name?: boolean
+    username?: boolean
     isVerified?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -1314,12 +1324,13 @@ export namespace Prisma {
     id?: boolean
     email?: boolean
     name?: boolean
+    username?: boolean
     isVerified?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type UserOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "email" | "name" | "isVerified" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
+  export type UserOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "email" | "name" | "username" | "isVerified" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
   export type UserInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     posts?: boolean | User$postsArgs<ExtArgs>
     otp?: boolean | User$otpArgs<ExtArgs>
@@ -1338,6 +1349,7 @@ export namespace Prisma {
       id: number
       email: string
       name: string | null
+      username: string | null
       isVerified: boolean
       createdAt: Date
       updatedAt: Date
@@ -1769,6 +1781,7 @@ export namespace Prisma {
     readonly id: FieldRef<"User", 'Int'>
     readonly email: FieldRef<"User", 'String'>
     readonly name: FieldRef<"User", 'String'>
+    readonly username: FieldRef<"User", 'String'>
     readonly isVerified: FieldRef<"User", 'Boolean'>
     readonly createdAt: FieldRef<"User", 'DateTime'>
     readonly updatedAt: FieldRef<"User", 'DateTime'>
@@ -4431,6 +4444,7 @@ export namespace Prisma {
     id: 'id',
     email: 'email',
     name: 'name',
+    username: 'username',
     isVerified: 'isVerified',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
@@ -4563,6 +4577,7 @@ export namespace Prisma {
     id?: IntFilter<"User"> | number
     email?: StringFilter<"User"> | string
     name?: StringNullableFilter<"User"> | string | null
+    username?: StringNullableFilter<"User"> | string | null
     isVerified?: BoolFilter<"User"> | boolean
     createdAt?: DateTimeFilter<"User"> | Date | string
     updatedAt?: DateTimeFilter<"User"> | Date | string
@@ -4574,6 +4589,7 @@ export namespace Prisma {
     id?: SortOrder
     email?: SortOrder
     name?: SortOrderInput | SortOrder
+    username?: SortOrderInput | SortOrder
     isVerified?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -4584,6 +4600,7 @@ export namespace Prisma {
   export type UserWhereUniqueInput = Prisma.AtLeast<{
     id?: number
     email?: string
+    username?: string
     AND?: UserWhereInput | UserWhereInput[]
     OR?: UserWhereInput[]
     NOT?: UserWhereInput | UserWhereInput[]
@@ -4593,12 +4610,13 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"User"> | Date | string
     posts?: PostListRelationFilter
     otp?: XOR<OTPNullableScalarRelationFilter, OTPWhereInput> | null
-  }, "id" | "email">
+  }, "id" | "email" | "username">
 
   export type UserOrderByWithAggregationInput = {
     id?: SortOrder
     email?: SortOrder
     name?: SortOrderInput | SortOrder
+    username?: SortOrderInput | SortOrder
     isVerified?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -4616,6 +4634,7 @@ export namespace Prisma {
     id?: IntWithAggregatesFilter<"User"> | number
     email?: StringWithAggregatesFilter<"User"> | string
     name?: StringNullableWithAggregatesFilter<"User"> | string | null
+    username?: StringNullableWithAggregatesFilter<"User"> | string | null
     isVerified?: BoolWithAggregatesFilter<"User"> | boolean
     createdAt?: DateTimeWithAggregatesFilter<"User"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"User"> | Date | string
@@ -4738,6 +4757,7 @@ export namespace Prisma {
   export type UserCreateInput = {
     email: string
     name?: string | null
+    username?: string | null
     isVerified?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -4749,6 +4769,7 @@ export namespace Prisma {
     id?: number
     email: string
     name?: string | null
+    username?: string | null
     isVerified?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -4759,6 +4780,7 @@ export namespace Prisma {
   export type UserUpdateInput = {
     email?: StringFieldUpdateOperationsInput | string
     name?: NullableStringFieldUpdateOperationsInput | string | null
+    username?: NullableStringFieldUpdateOperationsInput | string | null
     isVerified?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -4770,6 +4792,7 @@ export namespace Prisma {
     id?: IntFieldUpdateOperationsInput | number
     email?: StringFieldUpdateOperationsInput | string
     name?: NullableStringFieldUpdateOperationsInput | string | null
+    username?: NullableStringFieldUpdateOperationsInput | string | null
     isVerified?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -4781,6 +4804,7 @@ export namespace Prisma {
     id?: number
     email: string
     name?: string | null
+    username?: string | null
     isVerified?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -4789,6 +4813,7 @@ export namespace Prisma {
   export type UserUpdateManyMutationInput = {
     email?: StringFieldUpdateOperationsInput | string
     name?: NullableStringFieldUpdateOperationsInput | string | null
+    username?: NullableStringFieldUpdateOperationsInput | string | null
     isVerified?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -4798,6 +4823,7 @@ export namespace Prisma {
     id?: IntFieldUpdateOperationsInput | number
     email?: StringFieldUpdateOperationsInput | string
     name?: NullableStringFieldUpdateOperationsInput | string | null
+    username?: NullableStringFieldUpdateOperationsInput | string | null
     isVerified?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -4988,6 +5014,7 @@ export namespace Prisma {
     id?: SortOrder
     email?: SortOrder
     name?: SortOrder
+    username?: SortOrder
     isVerified?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -5001,6 +5028,7 @@ export namespace Prisma {
     id?: SortOrder
     email?: SortOrder
     name?: SortOrder
+    username?: SortOrder
     isVerified?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -5010,6 +5038,7 @@ export namespace Prisma {
     id?: SortOrder
     email?: SortOrder
     name?: SortOrder
+    username?: SortOrder
     isVerified?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -5536,6 +5565,7 @@ export namespace Prisma {
   export type UserCreateWithoutPostsInput = {
     email: string
     name?: string | null
+    username?: string | null
     isVerified?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -5546,6 +5576,7 @@ export namespace Prisma {
     id?: number
     email: string
     name?: string | null
+    username?: string | null
     isVerified?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -5571,6 +5602,7 @@ export namespace Prisma {
   export type UserUpdateWithoutPostsInput = {
     email?: StringFieldUpdateOperationsInput | string
     name?: NullableStringFieldUpdateOperationsInput | string | null
+    username?: NullableStringFieldUpdateOperationsInput | string | null
     isVerified?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -5581,6 +5613,7 @@ export namespace Prisma {
     id?: IntFieldUpdateOperationsInput | number
     email?: StringFieldUpdateOperationsInput | string
     name?: NullableStringFieldUpdateOperationsInput | string | null
+    username?: NullableStringFieldUpdateOperationsInput | string | null
     isVerified?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -5590,6 +5623,7 @@ export namespace Prisma {
   export type UserCreateWithoutOtpInput = {
     email: string
     name?: string | null
+    username?: string | null
     isVerified?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -5600,6 +5634,7 @@ export namespace Prisma {
     id?: number
     email: string
     name?: string | null
+    username?: string | null
     isVerified?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -5625,6 +5660,7 @@ export namespace Prisma {
   export type UserUpdateWithoutOtpInput = {
     email?: StringFieldUpdateOperationsInput | string
     name?: NullableStringFieldUpdateOperationsInput | string | null
+    username?: NullableStringFieldUpdateOperationsInput | string | null
     isVerified?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -5635,6 +5671,7 @@ export namespace Prisma {
     id?: IntFieldUpdateOperationsInput | number
     email?: StringFieldUpdateOperationsInput | string
     name?: NullableStringFieldUpdateOperationsInput | string | null
+    username?: NullableStringFieldUpdateOperationsInput | string | null
     isVerified?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
