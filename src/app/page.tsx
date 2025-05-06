@@ -20,9 +20,13 @@ export default function Home() {
   const [loading, setLoading] = useState<boolean>(false);
   const [otp, setOtp] = useState<string>("");
 
+  const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
   const handleGetStarted = async (): Promise<void> => {
-    if (!email) return;
+    if (!isValidEmail) return;
+
     setLoading(true);
+
     try {
       const res = await fetch("/api/auth/send-otp", {
         method: "POST",
@@ -46,7 +50,9 @@ export default function Home() {
 
   const handleOtpSubmit = async (): Promise<void> => {
     if (otp.length !== 6) return;
+
     setLoading(true);
+
     try {
       const res = await fetch("/api/auth/verify-otp", {
         method: "POST",
@@ -82,13 +88,16 @@ export default function Home() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === "Enter" && !loading) handleGetStarted();
+                if (e.key === "Enter" && !loading && isValidEmail) {
+                  handleGetStarted();
+                }
               }}
               disabled={loading}
             />
             <Button
               onClick={handleGetStarted}
-              disabled={loading}
+              disabled={!isValidEmail || loading}
+              variant={isValidEmail ? "default" : "outline"}
               className="w-full"
             >
               {loading ? "Sending OTP..." : "Get Started"}
