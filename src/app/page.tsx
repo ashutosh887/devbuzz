@@ -84,7 +84,7 @@ export default function Home() {
 
       <div className="w-full max-w-sm space-y-4 m-2">
         {step === "email" && (
-          <>
+          <div className="space-y-4">
             <Input
               type="email"
               placeholder="Enter your email"
@@ -105,11 +105,11 @@ export default function Home() {
             >
               {loading ? "Sending OTP..." : "Get Started"}
             </Button>
-          </>
+          </div>
         )}
 
         {step === "otp" && (
-          <>
+          <div className="flex flex-col items-center justify-center space-y-6">
             <InputOTP
               maxLength={6}
               value={otp}
@@ -140,7 +140,7 @@ export default function Home() {
             >
               {loading ? "Verifying..." : "Submit"}
             </Button>
-          </>
+          </div>
         )}
       </div>
     </div>
