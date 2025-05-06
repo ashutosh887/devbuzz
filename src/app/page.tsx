@@ -22,9 +22,7 @@ export default function Home() {
 
   const handleGetStarted = async (): Promise<void> => {
     if (!email) return;
-
     setLoading(true);
-
     try {
       const res = await fetch("/api/auth/send-otp", {
         method: "POST",
@@ -33,19 +31,14 @@ export default function Home() {
       });
 
       const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || "Failed to send OTP");
-      }
+      if (!res.ok) throw new Error(data.error || "Failed to send OTP");
 
       toast.success("OTP sent successfully!");
       setStep("otp");
     } catch (err) {
-      if (err instanceof Error) {
-        toast.error(err.message || "Something went wrong");
-      } else {
-        toast.error("Unknown error occurred");
-      }
+      toast.error(
+        err instanceof Error ? err.message : "Unknown error occurred"
+      );
     } finally {
       setLoading(false);
     }
@@ -53,9 +46,7 @@ export default function Home() {
 
   const handleOtpSubmit = async (): Promise<void> => {
     if (otp.length !== 6) return;
-
     setLoading(true);
-
     try {
       const res = await fetch("/api/auth/verify-otp", {
         method: "POST",
@@ -64,19 +55,14 @@ export default function Home() {
       });
 
       const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || "Invalid OTP");
-      }
+      if (!res.ok) throw new Error(data.error || "Invalid OTP");
 
       toast.success("OTP verified successfully!");
       router.push("/dashboard");
     } catch (err) {
-      if (err instanceof Error) {
-        toast.error(err.message || "Verification failed");
-      } else {
-        toast.error("Unknown error occurred");
-      }
+      toast.error(
+        err instanceof Error ? err.message : "Unknown error occurred"
+      );
     } finally {
       setLoading(false);
     }
@@ -95,6 +81,9 @@ export default function Home() {
               placeholder="Enter your email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !loading) handleGetStarted();
+              }}
               disabled={loading}
             />
             <Button
@@ -113,6 +102,11 @@ export default function Home() {
               maxLength={6}
               value={otp}
               onChange={(val) => setOtp(val)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && otp.length === 6 && !loading) {
+                  handleOtpSubmit();
+                }
+              }}
               className="flex gap-x-2"
             >
               <InputOTPGroup>
