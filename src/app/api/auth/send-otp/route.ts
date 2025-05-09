@@ -5,6 +5,28 @@ import bcrypt from "bcryptjs";
 import config from "@/config";
 import { resend } from "@/lib/resend";
 
+function isErrorWithMessage(error: unknown): error is { message: string } {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "message" in error &&
+    typeof (error as Record<string, unknown>).message === "string"
+  );
+}
+
+function getErrorMessage(error: unknown): string {
+  if (isErrorWithMessage(error)) {
+    return error.message;
+  } else if (typeof error === "string") {
+    return error;
+  }
+  try {
+    return JSON.stringify(error, null, 2);
+  } catch {
+    return "Unknown error";
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
     const { email } = await req.json();
@@ -45,20 +67,32 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    const { error } = await resend.emails.send({
-      from: `${config.appName} <onboarding@resend.dev>`,
-      to: [email],
-      subject: "Your OTP Code",
-      react: OTPEmailTemplate({ email, otp }),
-    });
+    try {
+      const { error } = await resend.emails.send({
+        from: `${config.appName} <onboarding@resend.dev>`,
+        to: [email],
+        subject: "Your OTP Code",
+        react: OTPEmailTemplate({ email, otp }),
+      });
 
-    if (error) {
-      return NextResponse.json({ error }, { status: 400 });
+      if (error) {
+        const errorMessage = getErrorMessage(error);
+        console.error("Email send error:", errorMessage);
+        return NextResponse.json({ error: errorMessage }, { status: 400 });
+      }
+    } catch (sendError: unknown) {
+      const errorMessage = getErrorMessage(sendError);
+      console.error("Unexpected email send failure:", errorMessage);
+      return NextResponse.json(
+        { error: `Failed to send email: ${errorMessage}` },
+        { status: 500 }
+      );
     }
 
     return NextResponse.json({ success: true, message: "OTP sent" });
-  } catch (err) {
-    console.error("Error in send-otp:", err);
+  } catch (err: unknown) {
+    const errorMessage = getErrorMessage(err);
+    console.error("Error in send-otp:", errorMessage);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
