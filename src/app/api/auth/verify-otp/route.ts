@@ -29,6 +29,7 @@ export async function POST(req: NextRequest) {
     const otpEntry = await prisma.oTP.findUnique({
       where: { userId: user.id },
     });
+
     if (!otpEntry || new Date() > otpEntry.expiresAt) {
       return NextResponse.json(
         { error: "OTP expired or not found" },
@@ -48,11 +49,21 @@ export async function POST(req: NextRequest) {
       data: { isVerified: true },
     });
 
-    return NextResponse.json({
+    const res = NextResponse.json({
       success: true,
       message: "OTP verified",
       user: updatedUser,
     });
+
+    res.cookies.set("user_email", email, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: 60 * 60 * 24 * 7, // 7 days
+    });
+
+    return res;
   } catch (err) {
     console.error("Error in verify-otp:", err);
     return NextResponse.json(
