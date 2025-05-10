@@ -1,4 +1,31 @@
 import { NextRequest, NextResponse } from "next/server";
+import OTPEmailTemplate from "@/components/templates/otp-email-template";
+import { prisma } from "@/lib/prisma";
+import bcrypt from "bcryptjs";
+import config from "@/config";
+import { resend } from "@/lib/resend";
+
+function isErrorWithMessage(error: unknown): error is { message: string } {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "message" in error &&
+    typeof (error as Record<string, unknown>).message === "string"
+  );
+}
+
+function getErrorMessage(error: unknown): string {
+  if (isErrorWithMessage(error)) {
+    return error.message;
+  } else if (typeof error === "string") {
+    return error;
+  }
+  try {
+    return JSON.stringify(error, null, 2);
+  } catch {
+    return "Unknown error";
+  }
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -16,14 +43,59 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (process.env.NODE_ENV === "development") {
-      await new Promise((res) => setTimeout(res, 2000));
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otpExpiry = new Date(Date.now() + 10 * 60 * 1000);
+    const hashedOtp = await bcrypt.hash(otp, 10);
+
+    let user = await prisma.user.findUnique({ where: { email } });
+    if (!user) {
+      user = await prisma.user.create({ data: { email } });
     }
 
-    // TODO: Replace with real OTP logic
-    return NextResponse.json({ success: true, message: "OTP sent to email" });
-  } catch (err) {
-    console.error("Error in send-otp:", err);
+    await prisma.oTP.upsert({
+      where: { userId: user.id },
+      update: {
+        otpCode: hashedOtp,
+        expiresAt: otpExpiry,
+        createdAt: new Date(),
+      },
+      create: {
+        userId: user.id,
+        otpCode: hashedOtp,
+        expiresAt: otpExpiry,
+      },
+    });
+
+    let emailErrorMessage: string | null = null;
+
+    try {
+      const { error } = await resend.emails.send({
+        from: `${config.appName} <onboarding@resend.dev>`,
+        to: [email],
+        subject: "Your OTP Code",
+        react: OTPEmailTemplate({ email, otp }),
+      });
+
+      if (error) {
+        emailErrorMessage = getErrorMessage(error);
+        console.warn("Email send error:", emailErrorMessage);
+      }
+    } catch (sendError: unknown) {
+      emailErrorMessage = getErrorMessage(sendError);
+      console.warn("Unexpected email send failure:", emailErrorMessage);
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: emailErrorMessage
+        ? "OTP generated, but email failed"
+        : "OTP sent successfully",
+      ...(config.featureFlags.SHOW_OTP_AS_TOAST ? { otp } : {}),
+      ...(emailErrorMessage ? { emailError: emailErrorMessage } : {}),
+    });
+  } catch (err: unknown) {
+    const errorMessage = getErrorMessage(err);
+    console.error("Error in send-otp:", errorMessage);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

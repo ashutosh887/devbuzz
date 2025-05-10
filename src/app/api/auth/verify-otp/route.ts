@@ -1,33 +1,72 @@
 import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import bcrypt from "bcryptjs";
 
 export async function POST(req: NextRequest) {
   try {
-    const { otp } = await req.json();
+    const { email, otp } = await req.json();
 
-    if (!otp || typeof otp !== "string") {
-      return NextResponse.json({ error: "OTP is required" }, { status: 400 });
-    }
-
-    const otpRegex = /^\d{6}$/;
-    if (!otpRegex.test(otp)) {
+    if (!email || !otp) {
       return NextResponse.json(
-        { error: "Invalid OTP format" },
+        { error: "Email and OTP are required" },
         { status: 400 }
       );
     }
 
-    const mockUser = {
-      id: 1,
-      email: "demo@example.com",
-      name: null,
-      isVerified: true,
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    const otpEntry = await prisma.oTP.findUnique({
+      where: { userId: user.id },
+    });
+
+    if (!otpEntry || new Date() > otpEntry.expiresAt) {
+      return NextResponse.json(
+        { error: "OTP expired or not found" },
+        { status: 400 }
+      );
+    }
+
+    const isValid = await bcrypt.compare(otp, otpEntry.otpCode);
+    if (!isValid) {
+      return NextResponse.json({ error: "Incorrect OTP" }, { status: 400 });
+    }
+
+    await prisma.oTP.delete({ where: { userId: user.id } });
+
+    const userAgent = req.headers.get("user-agent") || undefined;
+
+    const session = await prisma.session.create({
+      data: {
+        userId: user.id,
+        expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7), // 7 days
+        userAgent,
+      },
+    });
+
+    const publicUser = {
+      id: user.id,
+      name: user.name,
+      username: user.username,
     };
 
-    return NextResponse.json({
+    const res = NextResponse.json({
       success: true,
       message: "OTP verified",
-      user: mockUser,
+      user: publicUser,
     });
+
+    res.cookies.set("session_id", session.id, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: 60 * 60 * 24 * 7,
+    });
+
+    return res;
   } catch (err) {
     console.error("Error in verify-otp:", err);
     return NextResponse.json(

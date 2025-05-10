@@ -1,6 +1,7 @@
 "use client";
+
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -9,27 +10,44 @@ export default function OnboardingPage() {
   const router = useRouter();
   const [name, setName] = useState("");
   const [username, setUsername] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    const session = localStorage.getItem("session");
-    if (!session) router.push("/");
-  }, []);
-
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!name || !username) {
       toast.error("Please fill all fields");
       return;
     }
 
-    const updated = {
-      ...JSON.parse(localStorage.getItem("session") || "{}"),
-      name,
-      username,
-    };
+    const isValid = /^[a-zA-Z0-9_]{3,15}$/.test(username);
+    if (!isValid) {
+      toast.error(
+        "Username must be 3-15 characters long and contain only letters, numbers, and underscores"
+      );
+      return;
+    }
 
-    localStorage.setItem("session", JSON.stringify(updated));
-    toast.success("Onboarding complete!");
-    router.push("/dashboard");
+    setLoading(true);
+    try {
+      const res = await fetch("/api/user/onboard-user", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, username }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        toast.error(data.error || "Something went wrong");
+        return;
+      }
+
+      toast.success("Onboarding complete!");
+      router.push("/dashboard");
+    } catch {
+      toast.error("Network error");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -45,8 +63,8 @@ export default function OnboardingPage() {
         value={username}
         onChange={(e) => setUsername(e.target.value)}
       />
-      <Button onClick={handleSubmit} className="w-full">
-        Continue
+      <Button onClick={handleSubmit} disabled={loading} className="w-full">
+        {loading ? "Submitting..." : "Continue"}
       </Button>
     </div>
   );

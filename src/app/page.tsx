@@ -1,5 +1,6 @@
 "use client";
-import { useState } from "react";
+
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,10 +15,28 @@ import config from "@/config";
 
 export default function Home() {
   const router = useRouter();
+  const emailInputRef = useRef<HTMLInputElement>(null);
   const [email, setEmail] = useState<string>("");
   const [step, setStep] = useState<"email" | "otp">("email");
   const [loading, setLoading] = useState<boolean>(false);
   const [otp, setOtp] = useState<string>("");
+
+  useEffect(() => {
+    const checkSession = async () => {
+      const res = await fetch("/api/auth/session", { method: "GET" });
+      const data = await res.json();
+      if (data?.user) {
+        router.push(data.user.name ? "/dashboard" : "/onboarding");
+      }
+    };
+    checkSession();
+  }, [router]);
+
+  useEffect(() => {
+    if (step === "email" && emailInputRef.current) {
+      emailInputRef.current.focus();
+    }
+  }, [step]);
 
   const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
@@ -33,9 +52,19 @@ export default function Home() {
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to send OTP");
 
-      toast.success("OTP sent successfully!");
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || "Failed to send OTP");
+      }
+
+      if (data.emailError) {
+        toast.warning(`Email failed: ${data.emailError}`);
+      }
+
+      if (data.otp && config.featureFlags.SHOW_OTP_AS_TOAST) {
+        toast.info(`Your OTP is ${data.otp}`, { duration: 10000 });
+      }
+
       setStep("otp");
     } catch (err) {
       toast.error(
@@ -54,20 +83,14 @@ export default function Home() {
       const res = await fetch("/api/auth/verify-otp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ otp }),
+        body: JSON.stringify({ email, otp }),
       });
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Invalid OTP");
 
-      localStorage.setItem("session", JSON.stringify(data.user));
-
       toast.success("OTP verified successfully!");
-      if (data.user.name) {
-        router.push("/dashboard");
-      } else {
-        router.push("/onboarding");
-      }
+      router.push(data.user.name ? "/dashboard" : "/onboarding");
     } catch (err) {
       toast.error(
         err instanceof Error ? err.message : "Unknown error occurred"
@@ -86,6 +109,7 @@ export default function Home() {
         {step === "email" && (
           <div className="space-y-4">
             <Input
+              ref={emailInputRef}
               type="email"
               placeholder="Enter your email"
               value={email}

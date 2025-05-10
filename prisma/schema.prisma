@@ -9,15 +9,16 @@ datasource db {
 }
 
 model User {
-  id          Int     @id @default(autoincrement())
-  email       String  @unique
-  name        String?
-  username    String? @unique
-  posts       Post[]
-  otp         OTP?
-  isVerified  Boolean @default(false)       // Whether the user is verified via OTP
-  createdAt   DateTime @default(now())      // Record creation time
-  updatedAt   DateTime @updatedAt           // Auto-updated timestamp
+  id         Int       @id @default(autoincrement())
+  email      String    @unique
+  name       String?
+  username   String?   @unique
+  posts      Post[]
+  otp        OTP?
+  sessions   Session[]
+  isVerified Boolean   @default(false)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
 }
 
 model Post {
@@ -30,10 +31,23 @@ model Post {
 }
 
 model OTP {
-  id         Int      @id @default(autoincrement())
-  userId     Int      @unique
+  id        Int      @id @default(autoincrement())
+  userId    Int      @unique
+  user      User     @relation(fields: [userId], references: [id])
+  otpCode   String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([expiresAt])
+}
+
+model Session {
+  id         String   @id @default(cuid())
+  userId     Int
   user       User     @relation(fields: [userId], references: [id])
-  otpCode    String                               // Store hashed OTP
-  expiresAt  DateTime                             // OTP expiry time
-  createdAt  DateTime @default(now())             // OTP creation time
+  createdAt  DateTime @default(now())
+  expiresAt  DateTime
+  userAgent  String?
+
+  @@index([expiresAt])
 }
