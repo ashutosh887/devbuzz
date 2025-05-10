@@ -13,14 +13,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const otpRegex = /^\d{6}$/;
-    if (!otpRegex.test(otp)) {
-      return NextResponse.json(
-        { error: "Invalid OTP format" },
-        { status: 400 }
-      );
-    }
-
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
@@ -44,23 +36,34 @@ export async function POST(req: NextRequest) {
 
     await prisma.oTP.delete({ where: { userId: user.id } });
 
-    const updatedUser = await prisma.user.update({
-      where: { id: user.id },
-      data: { isVerified: true },
+    const userAgent = req.headers.get("user-agent") || undefined;
+
+    const session = await prisma.session.create({
+      data: {
+        userId: user.id,
+        expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7), // 7 days
+        userAgent,
+      },
     });
+
+    const publicUser = {
+      id: user.id,
+      name: user.name,
+      username: user.username,
+    };
 
     const res = NextResponse.json({
       success: true,
       message: "OTP verified",
-      user: updatedUser,
+      user: publicUser,
     });
 
-    res.cookies.set("user_email", email, {
+    res.cookies.set("session_id", session.id, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
       path: "/",
-      maxAge: 60 * 60 * 24 * 7, // 7 days
+      maxAge: 60 * 60 * 24 * 7,
     });
 
     return res;

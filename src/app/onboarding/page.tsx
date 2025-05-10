@@ -10,6 +10,7 @@ export default function OnboardingPage() {
   const router = useRouter();
   const [name, setName] = useState("");
   const [username, setUsername] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async () => {
     if (!name || !username) {
@@ -18,7 +19,6 @@ export default function OnboardingPage() {
     }
 
     const isValid = /^[a-zA-Z0-9_]{3,15}$/.test(username);
-
     if (!isValid) {
       toast.error(
         "Username must be 3-15 characters long and contain only letters, numbers, and underscores"
@@ -26,6 +26,7 @@ export default function OnboardingPage() {
       return;
     }
 
+    setLoading(true);
     try {
       const res = await fetch("/api/user/onboard-user", {
         method: "POST",
@@ -41,10 +42,11 @@ export default function OnboardingPage() {
       }
 
       toast.success("Onboarding complete!");
-
       router.push("/dashboard");
     } catch {
       toast.error("Network error");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -61,8 +63,8 @@ export default function OnboardingPage() {
         value={username}
         onChange={(e) => setUsername(e.target.value)}
       />
-      <Button onClick={handleSubmit} className="w-full">
-        Continue
+      <Button onClick={handleSubmit} disabled={loading} className="w-full">
+        {loading ? "Submitting..." : "Continue"}
       </Button>
     </div>
   );

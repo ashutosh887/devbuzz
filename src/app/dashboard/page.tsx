@@ -1,18 +1,12 @@
 "use client";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
 
 export default function DashboardPage() {
   const router = useRouter();
 
-  useEffect(() => {
-    const session = localStorage.getItem("session");
-    if (!session) router.push("/");
-  }, [router]);
-
-  const handleLogout = () => {
-    localStorage.removeItem("session");
+  const handleLogout = async () => {
+    await fetch("/api/auth/logout", { method: "POST" });
     router.push("/");
   };
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,10 +15,28 @@ import config from "@/config";
 
 export default function Home() {
   const router = useRouter();
+  const emailInputRef = useRef<HTMLInputElement>(null);
   const [email, setEmail] = useState<string>("");
   const [step, setStep] = useState<"email" | "otp">("email");
   const [loading, setLoading] = useState<boolean>(false);
   const [otp, setOtp] = useState<string>("");
+
+  useEffect(() => {
+    const checkSession = async () => {
+      const res = await fetch("/api/auth/session", { method: "GET" });
+      const data = await res.json();
+      if (data?.user) {
+        router.push(data.user.name ? "/dashboard" : "/onboarding");
+      }
+    };
+    checkSession();
+  }, [router]);
+
+  useEffect(() => {
+    if (step === "email" && emailInputRef.current) {
+      emailInputRef.current.focus();
+    }
+  }, [step]);
 
   const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
@@ -38,8 +56,6 @@ export default function Home() {
       if (!res.ok || !data.success) {
         throw new Error(data.error || "Failed to send OTP");
       }
-
-      toast.success("OTP generated!");
 
       if (data.emailError) {
         toast.warning(`Email failed: ${data.emailError}`);
@@ -73,9 +89,7 @@ export default function Home() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Invalid OTP");
 
-      localStorage.setItem("session", JSON.stringify(data.user));
       toast.success("OTP verified successfully!");
-
       router.push(data.user.name ? "/dashboard" : "/onboarding");
     } catch (err) {
       toast.error(
@@ -95,6 +109,7 @@ export default function Home() {
         {step === "email" && (
           <div className="space-y-4">
             <Input
+              ref={emailInputRef}
               type="email"
               placeholder="Enter your email"
               value={email}
