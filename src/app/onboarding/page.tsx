@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,8 @@ import { toast } from "sonner";
 
 export default function OnboardingPage() {
   const router = useRouter();
+
+  const nameRef = useRef<HTMLInputElement>(null);
 
   const [name, setName] = useState("");
   const [username, setUsername] = useState("");
@@ -44,6 +46,13 @@ export default function OnboardingPage() {
 
     checkSession();
   }, [router]);
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      nameRef.current?.focus();
+    }, 100);
+    return () => clearTimeout(timeout);
+  }, []);
 
   const handleSubmit = async () => {
     if (!name.trim() || !username.trim()) {
@@ -99,6 +108,7 @@ export default function OnboardingPage() {
         </p>
       )}
       <Input
+        ref={nameRef}
         placeholder="Full Name"
         value={name}
         onChange={(e) => setName(e.target.value)}
@@ -107,6 +117,11 @@ export default function OnboardingPage() {
         placeholder="Username"
         value={username}
         onChange={(e) => setUsername(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" && !loading) {
+            handleSubmit();
+          }
+        }}
       />
       <Button onClick={handleSubmit} disabled={loading} className="w-full">
         {loading ? "Submitting..." : "Continue"}
