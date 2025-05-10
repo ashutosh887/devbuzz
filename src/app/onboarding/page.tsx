@@ -1,6 +1,7 @@
 "use client";
+
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -10,26 +11,41 @@ export default function OnboardingPage() {
   const [name, setName] = useState("");
   const [username, setUsername] = useState("");
 
-  useEffect(() => {
-    const session = localStorage.getItem("session");
-    if (!session) router.push("/");
-  }, []);
-
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!name || !username) {
       toast.error("Please fill all fields");
       return;
     }
 
-    const updated = {
-      ...JSON.parse(localStorage.getItem("session") || "{}"),
-      name,
-      username,
-    };
+    const isValid = /^[a-zA-Z0-9_]{3,15}$/.test(username);
 
-    localStorage.setItem("session", JSON.stringify(updated));
-    toast.success("Onboarding complete!");
-    router.push("/dashboard");
+    if (!isValid) {
+      toast.error(
+        "Username must be 3-15 characters long and contain only letters, numbers, and underscores"
+      );
+      return;
+    }
+
+    try {
+      const res = await fetch("/api/user/onboard-user", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, username }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        toast.error(data.error || "Something went wrong");
+        return;
+      }
+
+      toast.success("Onboarding complete!");
+
+      router.push("/dashboard");
+    } catch {
+      toast.error("Network error");
+    }
   };
 
   return (
