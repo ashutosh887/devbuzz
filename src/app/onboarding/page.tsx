@@ -1,7 +1,7 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -11,6 +11,26 @@ export default function OnboardingPage() {
   const [name, setName] = useState("");
   const [username, setUsername] = useState("");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const checkSession = async () => {
+      try {
+        const res = await fetch("/api/auth/session", {
+          method: "GET",
+          credentials: "include",
+        });
+
+        const data = await res.json();
+        if (data?.user) {
+          router.push("/dashboard");
+        }
+      } catch (err) {
+        console.warn("Failed to check session", err);
+      }
+    };
+
+    checkSession();
+  }, [router]);
 
   const handleSubmit = async () => {
     if (!name || !username) {
