@@ -23,7 +23,10 @@ export default function Home() {
 
   useEffect(() => {
     const checkSession = async () => {
-      const res = await fetch("/api/auth/session", { method: "GET" });
+      const res = await fetch("/api/auth/session", {
+        method: "GET",
+        credentials: "include",
+      });
       const data = await res.json();
       if (data?.user) {
         router.push(data.user.name ? "/dashboard" : "/onboarding");
@@ -83,6 +86,7 @@ export default function Home() {
       const res = await fetch("/api/auth/verify-otp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ email, otp }),
       });
 

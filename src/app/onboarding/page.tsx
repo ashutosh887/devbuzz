@@ -31,6 +31,7 @@ export default function OnboardingPage() {
       const res = await fetch("/api/user/onboard-user", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ name, username }),
       });
 
