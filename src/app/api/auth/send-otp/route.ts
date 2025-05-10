@@ -45,7 +45,6 @@ export async function POST(req: NextRequest) {
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const otpExpiry = new Date(Date.now() + 10 * 60 * 1000);
-
     const hashedOtp = await bcrypt.hash(otp, 10);
 
     let user = await prisma.user.findUnique({ where: { email } });
@@ -67,6 +66,8 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    let emailErrorMessage: string | null = null;
+
     try {
       const { error } = await resend.emails.send({
         from: `${config.appName} <onboarding@resend.dev>`,
@@ -76,20 +77,22 @@ export async function POST(req: NextRequest) {
       });
 
       if (error) {
-        const errorMessage = getErrorMessage(error);
-        console.error("Email send error:", errorMessage);
-        return NextResponse.json({ error: errorMessage }, { status: 400 });
+        emailErrorMessage = getErrorMessage(error);
+        console.warn("Email send error:", emailErrorMessage);
       }
     } catch (sendError: unknown) {
-      const errorMessage = getErrorMessage(sendError);
-      console.error("Unexpected email send failure:", errorMessage);
-      return NextResponse.json(
-        { error: `Failed to send email: ${errorMessage}` },
-        { status: 500 }
-      );
+      emailErrorMessage = getErrorMessage(sendError);
+      console.warn("Unexpected email send failure:", emailErrorMessage);
     }
 
-    return NextResponse.json({ success: true, message: "OTP sent" });
+    return NextResponse.json({
+      success: true,
+      message: emailErrorMessage
+        ? "OTP generated, but email failed"
+        : "OTP sent successfully",
+      ...(config.featureFlags.SHOW_OTP_AS_TOAST ? { otp } : {}),
+      ...(emailErrorMessage ? { emailError: emailErrorMessage } : {}),
+    });
   } catch (err: unknown) {
     const errorMessage = getErrorMessage(err);
     console.error("Error in send-otp:", errorMessage);

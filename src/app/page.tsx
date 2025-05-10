@@ -1,4 +1,5 @@
 "use client";
+
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -33,9 +34,21 @@ export default function Home() {
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to send OTP");
 
-      toast.success("OTP sent successfully!");
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || "Failed to send OTP");
+      }
+
+      toast.success("OTP generated!");
+
+      if (data.emailError) {
+        toast.warning(`Email failed: ${data.emailError}`);
+      }
+
+      if (data.otp && config.featureFlags.SHOW_OTP_AS_TOAST) {
+        toast.info(`Your OTP is ${data.otp}`, { duration: 10000 });
+      }
+
       setStep("otp");
     } catch (err) {
       toast.error(
@@ -61,13 +74,9 @@ export default function Home() {
       if (!res.ok) throw new Error(data.error || "Invalid OTP");
 
       localStorage.setItem("session", JSON.stringify(data.user));
-
       toast.success("OTP verified successfully!");
-      if (data.user.name) {
-        router.push("/dashboard");
-      } else {
-        router.push("/onboarding");
-      }
+
+      router.push(data.user.name ? "/dashboard" : "/onboarding");
     } catch (err) {
       toast.error(
         err instanceof Error ? err.message : "Unknown error occurred"
