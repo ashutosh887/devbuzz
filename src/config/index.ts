@@ -1,4 +1,6 @@
-import { featureFlags } from "./featureFlags";
+export const featureFlags = {
+  SHOW_OTP_AS_TOAST: true,
+};
 
 const config = {
   appName: "DevBuzz",
