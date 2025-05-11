@@ -6,6 +6,10 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import config from "@/config";
+
+const { MIN_TITLE_LENGTH, MAX_TITLE_LENGTH, MIN_CONTENT_WORDS } =
+  config.postConstraints;
 
 export function SubmitPostForm() {
   const router = useRouter();
@@ -13,16 +17,28 @@ export function SubmitPostForm() {
   const [content, setContent] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
+  const trimmedTitle = title.trim();
+  const trimmedContent = content.trim();
+
+  const titleLength = trimmedTitle.length;
+  const wordCount = trimmedContent.split(/\s+/).filter(Boolean).length;
+
+  const titleValid =
+    titleLength >= MIN_TITLE_LENGTH && titleLength <= MAX_TITLE_LENGTH;
+  const contentValid = wordCount >= MIN_CONTENT_WORDS;
+
+  const isValid = titleValid && contentValid;
+
   const handleSubmit = async () => {
-    if (!title.trim() || !content.trim()) return;
+    if (!isValid) return;
 
     setSubmitting(true);
 
     try {
-      const res = await fetch("/api/posts", {
+      const res = await fetch("/api/posts/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: title.trim(), content: content.trim() }),
+        body: JSON.stringify({ title: trimmedTitle, content: trimmedContent }),
       });
 
       const data = await res.json();
@@ -42,27 +58,35 @@ export function SubmitPostForm() {
     }
   };
 
-  const isValid = title.trim() !== "" && content.trim() !== "";
-
   return (
-    <div className="w-full space-y-4">
-      <Input
-        placeholder="Title"
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-        className="text-base font-medium"
-      />
+    <div className="w-full space-y-3">
+      <div className="space-y-1">
+        <Input
+          placeholder="Enter a compelling title..."
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          className="text-base font-medium"
+        />
+        <p className="text-xs text-muted-foreground">
+          {titleLength}/{MAX_TITLE_LENGTH} characters • min {MIN_TITLE_LENGTH}
+        </p>
+      </div>
 
-      <Textarea
-        placeholder="Write something awesome..."
-        className="min-h-[160px] w-full resize-none"
-        value={content}
-        onChange={(e) => setContent(e.target.value)}
-      />
+      <div className="space-y-1">
+        <Textarea
+          placeholder="Write your post content here..."
+          className="min-h-[200px] w-full resize-none"
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+        />
+        <p className="text-xs text-muted-foreground">
+          {wordCount} words • min {MIN_CONTENT_WORDS}
+        </p>
+      </div>
 
       <Button
         onClick={handleSubmit}
-        className="mt-2"
+        className="mt-1"
         disabled={!isValid || submitting}
       >
         {submitting ? "Submitting..." : "Submit"}

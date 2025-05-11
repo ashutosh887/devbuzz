@@ -80,7 +80,7 @@ export default function PostDetailPage({
   });
 
   return (
-    <FeedWrapper pageLabel="Post" canSubmit={false}>
+    <FeedWrapper pageLabel="Post" canSubmit={true}>
       <h1 className="text-2xl font-bold">{post.title}</h1>
 
       <div className="flex items-center justify-between text-sm text-muted-foreground mb-4">
