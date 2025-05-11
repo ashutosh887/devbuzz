@@ -36,13 +36,11 @@ export async function POST(req: NextRequest) {
 
     await prisma.oTP.delete({ where: { userId: user.id } });
 
-    const userAgent = req.headers.get("user-agent") || undefined;
-
     const session = await prisma.session.create({
       data: {
         userId: user.id,
-        expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7), // 7 days
-        userAgent,
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+        userAgent: req.headers.get("user-agent") || undefined,
       },
     });
 

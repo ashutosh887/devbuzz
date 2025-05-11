@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import OTPEmailTemplate from "@/components/templates/otp-email-template";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
-import config from "@/config";
 import { resend } from "@/lib/resend";
+import config from "@/config";
+import OTPEmailTemplate from "@/components/templates/otp-email-template";
 
 function isErrorWithMessage(error: unknown): error is { message: string } {
   return (
@@ -44,25 +44,24 @@ export async function POST(req: NextRequest) {
     }
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const otpExpiry = new Date(Date.now() + 10 * 60 * 1000);
     const hashedOtp = await bcrypt.hash(otp, 10);
+    const expiry = new Date(Date.now() + 10 * 60 * 1000); // 10 min
 
-    let user = await prisma.user.findUnique({ where: { email } });
-    if (!user) {
-      user = await prisma.user.create({ data: { email } });
-    }
+    const user =
+      (await prisma.user.findUnique({ where: { email } })) ??
+      (await prisma.user.create({ data: { email } }));
 
     await prisma.oTP.upsert({
       where: { userId: user.id },
       update: {
         otpCode: hashedOtp,
-        expiresAt: otpExpiry,
+        expiresAt: expiry,
         createdAt: new Date(),
       },
       create: {
         userId: user.id,
         otpCode: hashedOtp,
-        expiresAt: otpExpiry,
+        expiresAt: expiry,
       },
     });
 

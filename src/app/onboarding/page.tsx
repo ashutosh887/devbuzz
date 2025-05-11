@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -8,32 +8,54 @@ import { toast } from "sonner";
 
 export default function OnboardingPage() {
   const router = useRouter();
+
+  const nameRef = useRef<HTMLInputElement>(null);
+
   const [name, setName] = useState("");
   const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
+  const [checkingSession, setCheckingSession] = useState(true);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const checkSession = async () => {
       try {
         const res = await fetch("/api/auth/session", {
-          method: "GET",
           credentials: "include",
         });
-
         const data = await res.json();
-        if (data?.user) {
-          router.push("/dashboard");
+        const user = data?.user;
+
+        if (!user) {
+          router.replace("/"); // No session
+          return;
         }
+
+        if (user.name && user.username) {
+          router.replace("/dashboard"); // Already onboarded
+          return;
+        }
+
+        setEmail(user.email || "");
+        setCheckingSession(false);
       } catch (err) {
-        console.warn("Failed to check session", err);
+        console.error("Session check failed:", err);
+        router.replace("/");
       }
     };
 
     checkSession();
   }, [router]);
 
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      nameRef.current?.focus();
+    }, 100);
+    return () => clearTimeout(timeout);
+  }, []);
+
   const handleSubmit = async () => {
-    if (!name || !username) {
+    if (!name.trim() || !username.trim()) {
       toast.error("Please fill all fields");
       return;
     }
@@ -41,7 +63,7 @@ export default function OnboardingPage() {
     const isValid = /^[a-zA-Z0-9_]{3,15}$/.test(username);
     if (!isValid) {
       toast.error(
-        "Username must be 3-15 characters long and contain only letters, numbers, and underscores"
+        "Username must be 3–15 characters and only include letters, numbers, and underscores"
       );
       return;
     }
@@ -52,18 +74,21 @@ export default function OnboardingPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ name, username }),
+        body: JSON.stringify({
+          name: name.trim(),
+          username: username.trim(),
+        }),
       });
 
       const data = await res.json();
 
       if (!res.ok) {
-        toast.error(data.error || "Something went wrong");
+        toast.error(data.error ?? "Something went wrong");
         return;
       }
 
       toast.success("Onboarding complete!");
-      router.push("/dashboard");
+      router.replace("/dashboard");
     } catch {
       toast.error("Network error");
     } finally {
@@ -71,10 +96,19 @@ export default function OnboardingPage() {
     }
   };
 
+  if (checkingSession) return null;
+
   return (
     <div className="flex flex-col items-center justify-center min-h-screen px-4 gap-4 w-full max-w-sm mx-auto">
       <h1 className="text-xl font-bold mb-2">Welcome! Let’s onboard you</h1>
+      {email && (
+        <p className="text-sm text-muted-foreground mb-2 text-center">
+          You are setting up your account for{" "}
+          <span className="font-medium">{email}</span>
+        </p>
+      )}
       <Input
+        ref={nameRef}
         placeholder="Full Name"
         value={name}
         onChange={(e) => setName(e.target.value)}
@@ -83,6 +117,11 @@ export default function OnboardingPage() {
         placeholder="Username"
         value={username}
         onChange={(e) => setUsername(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" && !loading) {
+            handleSubmit();
+          }
+        }}
       />
       <Button onClick={handleSubmit} disabled={loading} className="w-full">
         {loading ? "Submitting..." : "Continue"}

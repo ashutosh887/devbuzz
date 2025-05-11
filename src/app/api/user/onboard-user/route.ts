@@ -3,9 +3,12 @@ import { prisma } from "@/lib/prisma";
 
 export async function POST(req: NextRequest) {
   try {
-    const { name, username } = await req.json();
+    const { name, username } = (await req.json()) as {
+      name?: string;
+      username?: string;
+    };
 
-    if (!username || !name) {
+    if (!name || !username) {
       return NextResponse.json(
         { error: "Name and username are required" },
         { status: 400 }
@@ -35,14 +38,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Session expired" }, { status: 401 });
     }
 
-    const user = session.user;
+    const currentUser = session.user;
 
-    // Check if the username is taken by another user
+    // Check for username conflicts with other users
     const usernameTaken = await prisma.user.findUnique({
       where: { username },
     });
 
-    if (usernameTaken && usernameTaken.id !== user.id) {
+    if (usernameTaken && usernameTaken.id !== currentUser.id) {
       return NextResponse.json(
         { error: "Username already taken" },
         { status: 409 }
@@ -50,8 +53,11 @@ export async function POST(req: NextRequest) {
     }
 
     await prisma.user.update({
-      where: { id: user.id },
-      data: { name, username },
+      where: { id: currentUser.id },
+      data: {
+        name: name.trim(),
+        username: username.trim(),
+      },
     });
 
     return NextResponse.json({ success: true });
