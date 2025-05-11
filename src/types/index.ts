@@ -14,3 +14,14 @@ export type UserData = {
   upvotedPosts: Post[];
   downvotedPosts: Post[];
 };
+
+export type FullPost = {
+  id: number;
+  title: string;
+  content: string;
+  points: number;
+  author: {
+    username: string;
+  };
+  commentsCount: number;
+};

@@ -2,10 +2,10 @@
 
 import { use, useEffect, useState } from "react";
 import { useRouter, notFound } from "next/navigation";
-import posts from "@/config/mock/posts.json";
 import { Button } from "@/components/ui/button";
 import { ArrowUp, ArrowDown } from "lucide-react";
 import { FeedWrapper } from "@/components/common/FeedWrapper";
+import type { FullPost } from "@/types";
 
 export default function PostDetailPage({
   params,
@@ -14,9 +14,9 @@ export default function PostDetailPage({
 }) {
   const { id } = use(params);
   const router = useRouter();
-
   const [checkingSession, setCheckingSession] = useState(true);
   const [userValid, setUserValid] = useState(false);
+  const [post, setPost] = useState<FullPost | null>(null);
 
   useEffect(() => {
     const checkSession = async () => {
@@ -35,22 +35,31 @@ export default function PostDetailPage({
     checkSession();
   }, [router]);
 
-  if (checkingSession || !userValid) return null;
+  useEffect(() => {
+    const fetchPost = async () => {
+      const res = await fetch(`/api/posts/${id}`);
+      if (res.status === 404) return notFound();
 
-  const post = posts.find((p) => p.id === Number(id));
-  if (!post) return notFound();
+      const data = await res.json();
+      setPost(data);
+    };
 
-  const handleUpvote = () => console.log("Upvoted post:", post.id);
-  const handleDownvote = () => console.log("Downvoted post:", post.id);
+    if (userValid) fetchPost();
+  }, [userValid, id]);
+
+  const handleUpvote = () => console.log("Upvoted post:", post?.id);
+  const handleDownvote = () => console.log("Downvoted post:", post?.id);
+
+  if (checkingSession || !userValid || !post) return null;
 
   return (
-    <FeedWrapper pageLabel="Post" canSubmit={false}>
+    <FeedWrapper pageLabel="Post" canSubmit={true}>
       <h1 className="text-2xl font-bold">{post.title}</h1>
 
       <div className="flex items-center justify-between text-sm text-muted-foreground mb-4">
         <span>
-          by {post.author} • {post.points} points • {post.comments_count}{" "}
-          comments
+          by {post.author.username} • {post.points} points •{" "}
+          {post.commentsCount} comments
         </span>
 
         <div className="flex items-center gap-2">
