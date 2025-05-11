@@ -1,3 +1,4 @@
+// TODO: reset feature flags if needed
 export const featureFlags = {
   SHOW_OTP_AS_TOAST: true,
 };
