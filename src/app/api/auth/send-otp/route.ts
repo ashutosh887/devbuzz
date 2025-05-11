@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const hashedOtp = await bcrypt.hash(otp, 10);
-    const expiry = new Date(Date.now() + 10 * 60 * 1000); // 10 min
+    const expiry = new Date(Date.now() + 10 * 60 * 1000);
 
     const user =
       (await prisma.user.findUnique({ where: { email } })) ??

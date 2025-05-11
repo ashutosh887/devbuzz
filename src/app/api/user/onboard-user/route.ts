@@ -40,7 +40,6 @@ export async function POST(req: NextRequest) {
 
     const currentUser = session.user;
 
-    // Check for username conflicts with other users
     const usernameTaken = await prisma.user.findUnique({
       where: { username },
     });
