@@ -1,7 +1,11 @@
 export type Post = {
   id: number;
   title: string;
+  content: string;
   points: number;
+  author: string;
+  comments_count: number;
+  createdAt: string;
   status?: "pending" | "approved";
 };
 
@@ -24,4 +28,5 @@ export type FullPost = {
     username: string;
   };
   commentsCount: number;
+  createdAt: string;
 };
