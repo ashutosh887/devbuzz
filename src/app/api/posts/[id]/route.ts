@@ -36,5 +36,6 @@ export async function GET(
       username: post.author.username,
     },
     commentsCount: post.comments.length,
+    createdAt: post.createdAt.toISOString(),
   });
 }
