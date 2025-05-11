@@ -7,6 +7,13 @@ import { ArrowUp, ArrowDown } from "lucide-react";
 import { FeedWrapper } from "@/components/common/FeedWrapper";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { FullPost } from "@/types";
+import clsx from "clsx";
+import { toast } from "sonner";
+
+type VoteResponse = {
+  status?: "created" | "updated" | "removed";
+  error?: string;
+};
 
 export default function PostDetailPage({
   params,
@@ -20,6 +27,7 @@ export default function PostDetailPage({
   const [userValid, setUserValid] = useState(false);
   const [post, setPost] = useState<FullPost | null>(null);
   const [isLoadingPost, setIsLoadingPost] = useState(true);
+  const [userVote, setUserVote] = useState<number | null>(null);
 
   useEffect(() => {
     const checkSession = async () => {
@@ -46,6 +54,7 @@ export default function PostDetailPage({
         if (res.status === 404) return notFound();
         const data = await res.json();
         setPost(data);
+        setUserVote(data.userVote ?? null);
       } catch {
         return notFound();
       } finally {
@@ -56,8 +65,52 @@ export default function PostDetailPage({
     if (userValid) fetchPost();
   }, [userValid, id]);
 
-  const handleUpvote = () => console.log("Upvoted post:", post?.id);
-  const handleDownvote = () => console.log("Downvoted post:", post?.id);
+  const vote = async (value: 1 | -1) => {
+    if (!post) return;
+
+    try {
+      const res = await fetch("/api/posts/vote", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ postId: post.id, value }),
+      });
+
+      let result: VoteResponse = {};
+      const isJSON = res.headers
+        .get("content-type")
+        ?.includes("application/json");
+      if (isJSON) result = await res.json();
+
+      if (!res.ok) {
+        toast.error(result.error || "Something went wrong");
+        return;
+      }
+
+      const diff =
+        result.status === "removed"
+          ? -value
+          : result.status === "updated"
+            ? 2 * value
+            : value;
+
+      setPost((prev) => prev && { ...prev, points: prev.points + diff });
+      setUserVote(result.status === "removed" ? null : value);
+
+      toast(
+        result.status === "removed"
+          ? "Vote removed"
+          : result.status === "updated"
+            ? `Vote changed to ${value === 1 ? "upvote" : "downvote"}`
+            : value === 1
+              ? "Upvoted"
+              : "Downvoted"
+      );
+    } catch (err) {
+      console.error("Vote error:", err);
+      toast.error("Voting failed");
+    }
+  };
 
   if (checkingSession || isLoadingPost) {
     return (
@@ -73,11 +126,7 @@ export default function PostDetailPage({
 
   if (!post) return notFound();
 
-  const formattedDate = new Date(post.createdAt).toLocaleDateString(undefined, {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
+  const formattedDate = new Date(post.createdAt).toLocaleDateString();
 
   return (
     <FeedWrapper pageLabel="Post" canSubmit={true}>
@@ -90,10 +139,20 @@ export default function PostDetailPage({
         </span>
 
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" onClick={handleUpvote}>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => vote(1)}
+            className={clsx(userVote === 1 && "text-blue-500")}
+          >
             <ArrowUp className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="icon" onClick={handleDownvote}>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => vote(-1)}
+            className={clsx(userVote === -1 && "text-red-500")}
+          >
             <ArrowDown className="h-4 w-4" />
           </Button>
         </div>
@@ -102,7 +161,6 @@ export default function PostDetailPage({
       <p className="text-base whitespace-pre-line">{post.content}</p>
 
       <hr className="my-6" />
-
       <h2 className="text-lg font-semibold">Comments (soon)</h2>
       <p className="text-sm text-muted-foreground">
         Comment section coming soon...
