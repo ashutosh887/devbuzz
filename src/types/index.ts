@@ -4,7 +4,7 @@ export type Post = {
   content: string;
   points: number;
   author: string;
-  comments_count: number;
+  commentsCount: number;
   createdAt: string;
   status?: "pending" | "approved";
 };
