@@ -29,7 +29,6 @@ export default function SubmitPage() {
 
   const handleSubmit = async () => {
     if (!content.trim()) return;
-    console.log("Submit post:", content);
     setContent("");
   };
 
