@@ -64,7 +64,6 @@ export default function Home() {
             email={email}
             otp={otp}
             setOtp={setOtp}
-            setStep={setStep}
             loading={loading}
             setLoading={setLoading}
           />
