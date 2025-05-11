@@ -133,8 +133,27 @@ exports.Prisma.PostScalarFieldEnum = {
   id: 'id',
   title: 'title',
   content: 'content',
-  published: 'published',
-  authorId: 'authorId'
+  authorId: 'authorId',
+  points: 'points',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.CommentScalarFieldEnum = {
+  id: 'id',
+  content: 'content',
+  authorId: 'authorId',
+  postId: 'postId',
+  parentId: 'parentId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.VoteScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  postId: 'postId',
+  value: 'value'
 };
 
 exports.Prisma.OTPScalarFieldEnum = {
@@ -172,6 +191,8 @@ exports.Prisma.NullsOrder = {
 exports.Prisma.ModelName = {
   User: 'User',
   Post: 'Post',
+  Comment: 'Comment',
+  Vote: 'Vote',
   OTP: 'OTP',
   Session: 'Session'
 };
