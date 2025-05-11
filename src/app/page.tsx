@@ -27,7 +27,7 @@ export default function Home() {
         if (!user) return;
 
         if (user.name && user.username) {
-          router.replace("/dashboard");
+          router.replace("/feed");
         } else {
           router.replace("/onboarding");
         }

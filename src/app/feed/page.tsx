@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { increment, decrement } from "@/store/slices/counterSlice";
 
-export default function DashboardPage() {
+export default function FeedPage() {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const counter = useAppSelector((state) => state.counter.value);

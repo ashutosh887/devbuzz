@@ -27,12 +27,12 @@ export default function OnboardingPage() {
         const user = data?.user;
 
         if (!user) {
-          router.replace("/"); // No session
+          router.replace("/");
           return;
         }
 
         if (user.name && user.username) {
-          router.replace("/dashboard"); // Already onboarded
+          router.replace("/feed");
           return;
         }
 
@@ -88,7 +88,7 @@ export default function OnboardingPage() {
       }
 
       toast.success("Onboarding complete!");
-      router.replace("/dashboard");
+      router.replace("/feed");
     } catch {
       toast.error("Network error");
     } finally {
