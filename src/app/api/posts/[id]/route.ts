@@ -13,7 +13,6 @@ export async function GET(req: NextRequest) {
     const sessionId = req.cookies.get("session_id")?.value;
     let userId: number | null = null;
 
-    // Step 1: Get logged-in user (if any)
     if (sessionId) {
       const session = await prisma.session.findUnique({
         where: { id: sessionId },
@@ -25,12 +24,11 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    // Step 2: Fetch post details
     const post = await prisma.post.findUnique({
       where: { id: postId },
       include: {
         author: { select: { username: true } },
-        comments: { select: { id: true } }, // just to count them
+        comments: { select: { id: true } },
       },
     });
 
@@ -38,7 +36,6 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Post not found" }, { status: 404 });
     }
 
-    // Step 3: Get user's vote on this post
     let userVote: number | null = null;
     if (userId) {
       const vote = await prisma.vote.findUnique({
@@ -49,7 +46,6 @@ export async function GET(req: NextRequest) {
       userVote = vote?.value ?? null;
     }
 
-    // Step 4: Return structured post detail
     return NextResponse.json({
       id: post.id,
       title: post.title,

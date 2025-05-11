@@ -3,7 +3,6 @@ import { prisma } from "@/lib/prisma";
 
 export async function POST(req: NextRequest) {
   try {
-    // Step 1: Validate session
     const sessionId = req.cookies.get("session_id")?.value;
 
     if (!sessionId) {
@@ -27,7 +26,6 @@ export async function POST(req: NextRequest) {
 
     const userId = session.user.id;
 
-    // Step 2: Validate body
     const { postId, value } = await req.json();
 
     if (typeof postId !== "number" || ![1, -1].includes(value)) {
@@ -37,7 +35,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Step 3: Find existing vote
     const existingVote = await prisma.vote.findUnique({
       where: {
         userId_postId: {
@@ -49,7 +46,6 @@ export async function POST(req: NextRequest) {
 
     if (existingVote) {
       if (existingVote.value === value) {
-        // Toggle vote (remove)
         await prisma.$transaction([
           prisma.vote.delete({
             where: { userId_postId: { userId, postId } },
@@ -62,7 +58,6 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ status: "removed" });
       }
 
-      // Change vote
       await prisma.$transaction([
         prisma.vote.update({
           where: { userId_postId: { userId, postId } },
@@ -76,7 +71,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ status: "updated" });
     }
 
-    // Step 4: New vote
     await prisma.$transaction([
       prisma.vote.create({
         data: {

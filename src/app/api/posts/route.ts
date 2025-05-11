@@ -8,7 +8,6 @@ export async function GET(req: NextRequest) {
 
     let userId: number | null = null;
 
-    // Step 1: Get session & user
     if (sessionId) {
       const session = await prisma.session.findUnique({
         where: { id: sessionId },
@@ -20,7 +19,6 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    // Step 2: Sort type based on filter
     let orderBy: { createdAt: "desc" } | { points: "desc" } = {
       createdAt: "desc",
     };
@@ -28,7 +26,6 @@ export async function GET(req: NextRequest) {
       orderBy = { points: "desc" };
     }
 
-    // Step 3: Get all posts
     const posts = await prisma.post.findMany({
       orderBy,
       include: {
@@ -37,7 +34,6 @@ export async function GET(req: NextRequest) {
       },
     });
 
-    // Step 4: Fetch user's votes
     let userVotesMap: Record<number, number> = {};
     if (userId) {
       const votes = await prisma.vote.findMany({ where: { userId } });
@@ -50,7 +46,6 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    // Step 5: Build result with optional score
     let result = posts.map((post) => {
       const unique = Math.min(
         post.comments.length,
