@@ -1,48 +1,33 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-export async function POST(req: NextRequest) {
+export async function GET() {
   try {
-    const sessionId = req.cookies.get("session_id")?.value;
-
-    if (!sessionId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const session = await prisma.session.findUnique({
-      where: { id: sessionId },
-      include: { user: true },
-    });
-
-    if (!session || new Date() > session.expiresAt) {
-      if (session) {
-        await prisma.session.delete({ where: { id: session.id } });
-      }
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const { title, content } = await req.json();
-
-    if (
-      !title ||
-      !content ||
-      typeof title !== "string" ||
-      typeof content !== "string"
-    ) {
-      return NextResponse.json({ error: "Invalid input" }, { status: 400 });
-    }
-
-    const post = await prisma.post.create({
-      data: {
-        title: title.trim().slice(0, 100),
-        content: content.trim(),
-        authorId: session.user.id,
+    const posts = await prisma.post.findMany({
+      orderBy: { createdAt: "desc" },
+      include: {
+        author: {
+          select: { username: true },
+        },
+        _count: {
+          select: { comments: true },
+        },
       },
     });
 
-    return NextResponse.json({ id: post.id }, { status: 201 });
-  } catch (err) {
-    console.error("POST /api/posts error:", err);
+    const formatted = posts.map((post) => ({
+      id: post.id,
+      title: post.title,
+      content: post.content,
+      points: post.points,
+      createdAt: post.createdAt.toISOString(),
+      author: post.author.username,
+      commentsCount: post._count.comments,
+    }));
+
+    return NextResponse.json(formatted);
+  } catch (error) {
+    console.error("GET /api/posts error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

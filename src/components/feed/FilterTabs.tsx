@@ -3,13 +3,13 @@
 import { Button } from "@/components/ui/button";
 import { Clock, TrendingUp, Star } from "lucide-react";
 
-const filters = [
+export const filters = [
   { icon: <Clock className="h-4 w-4 mr-1" />, value: "New" },
   { icon: <TrendingUp className="h-4 w-4 mr-1" />, value: "Top" },
   { icon: <Star className="h-4 w-4 mr-1" />, value: "Best" },
 ] as const;
 
-type Filter = (typeof filters)[number]["value"];
+export type Filter = (typeof filters)[number]["value"];
 
 interface FilterTabsProps {
   selected: Filter;
