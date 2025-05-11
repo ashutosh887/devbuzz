@@ -2,14 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
 import { FeedWrapper } from "@/components/common/FeedWrapper";
+import { SubmitPostForm } from "@/components/common/SubmitPostForm";
 
-export default function SubmitPage() {
+export default function SubmitPostPage() {
   const router = useRouter();
   const [checkingSession, setCheckingSession] = useState(true);
-  const [content, setContent] = useState("");
 
   useEffect(() => {
     const checkSession = async () => {
@@ -27,26 +25,12 @@ export default function SubmitPage() {
     checkSession();
   }, [router]);
 
-  const handleSubmit = async () => {
-    if (!content.trim()) return;
-    console.log("Submit post:", content);
-    setContent("");
-  };
-
   if (checkingSession) return null;
 
   return (
     <FeedWrapper pageLabel="Submit" canSubmit={false}>
       <h1 className="text-2xl font-semibold mb-4">Create a Post</h1>
-      <Textarea
-        placeholder="Write something awesome..."
-        className="min-h-[160px] w-full resize-none"
-        value={content}
-        onChange={(e) => setContent(e.target.value)}
-      />
-      <Button onClick={handleSubmit} className="mt-3">
-        Submit
-      </Button>
+      <SubmitPostForm />
     </FeedWrapper>
   );
 }
