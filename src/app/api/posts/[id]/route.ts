@@ -28,7 +28,19 @@ export async function GET(req: NextRequest) {
       where: { id: postId },
       include: {
         author: { select: { username: true } },
-        comments: { select: { id: true } },
+        comments: {
+          where: { parentId: null },
+          orderBy: { createdAt: "desc" },
+          include: {
+            author: { select: { username: true } },
+            replies: {
+              orderBy: { createdAt: "asc" },
+              include: {
+                author: { select: { username: true } },
+              },
+            },
+          },
+        },
       },
     });
 
@@ -52,14 +64,61 @@ export async function GET(req: NextRequest) {
       content: post.content,
       points: post.points,
       createdAt: post.createdAt,
-      commentsCount: post.comments.length,
-      author: {
-        username: post.author.username,
-      },
+      author: { username: post.author.username },
+      comments: post.comments,
       userVote,
     });
   } catch (err) {
     console.error("GET /api/posts/[id] error:", err);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function POST(req: NextRequest) {
+  try {
+    const sessionId = req.cookies.get("session_id")?.value;
+
+    if (!sessionId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const session = await prisma.session.findUnique({
+      where: { id: sessionId },
+      include: { user: true },
+    });
+
+    if (!session || new Date() > session.expiresAt) {
+      return NextResponse.json({ error: "Session expired" }, { status: 401 });
+    }
+
+    const { content, parentId } = await req.json();
+    const postId = parseInt(req.nextUrl.pathname.split("/").pop() || "", 10);
+
+    if (!content || typeof content !== "string" || isNaN(postId)) {
+      return NextResponse.json(
+        { error: "Invalid comment input" },
+        { status: 400 }
+      );
+    }
+
+    const comment = await prisma.comment.create({
+      data: {
+        content: content.trim(),
+        authorId: session.user.id,
+        postId,
+        parentId: parentId ?? null,
+      },
+      include: {
+        author: { select: { username: true } },
+      },
+    });
+
+    return NextResponse.json({ status: "created", comment });
+  } catch (err) {
+    console.error("POST /api/posts/[id] error:", err);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

@@ -3,16 +3,28 @@
 import { use, useEffect, useState } from "react";
 import { useRouter, notFound } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { ArrowUp, ArrowDown } from "lucide-react";
-import { FeedWrapper } from "@/components/common/FeedWrapper";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { FullPost } from "@/types";
-import clsx from "clsx";
+import { FeedWrapper } from "@/components/common/FeedWrapper";
+import { ArrowUp, ArrowDown } from "lucide-react";
 import { toast } from "sonner";
+import clsx from "clsx";
+import { CommentsThread } from "@/components/common/CommentsThread";
+import type { FullPost } from "@/types";
 
 type VoteResponse = {
   status?: "created" | "updated" | "removed";
   error?: string;
+};
+
+type CommentWithAuthor = {
+  id: number;
+  content: string;
+  author: { username: string };
+  replies?: CommentWithAuthor[];
+};
+
+type FullPostWithComments = FullPost & {
+  comments: CommentWithAuthor[];
 };
 
 export default function PostDetailPage({
@@ -25,9 +37,10 @@ export default function PostDetailPage({
 
   const [checkingSession, setCheckingSession] = useState(true);
   const [userValid, setUserValid] = useState(false);
-  const [post, setPost] = useState<FullPost | null>(null);
+  const [post, setPost] = useState<FullPostWithComments | null>(null);
   const [isLoadingPost, setIsLoadingPost] = useState(true);
   const [userVote, setUserVote] = useState<number | null>(null);
+  const [comments, setComments] = useState<CommentWithAuthor[]>([]);
 
   useEffect(() => {
     const checkSession = async () => {
@@ -55,6 +68,7 @@ export default function PostDetailPage({
         const data = await res.json();
         setPost(data);
         setUserVote(data.userVote ?? null);
+        setComments(data.comments || []);
       } catch {
         return notFound();
       } finally {
@@ -76,11 +90,10 @@ export default function PostDetailPage({
         body: JSON.stringify({ postId: post.id, value }),
       });
 
-      let result: VoteResponse = {};
       const isJSON = res.headers
         .get("content-type")
         ?.includes("application/json");
-      if (isJSON) result = await res.json();
+      const result: VoteResponse = isJSON ? await res.json() : {};
 
       if (!res.ok) {
         toast.error(result.error || "Something went wrong");
@@ -115,11 +128,9 @@ export default function PostDetailPage({
   if (checkingSession || isLoadingPost) {
     return (
       <FeedWrapper pageLabel="Post" canSubmit={false}>
-        <div className="space-y-4">
-          <Skeleton className="h-8 w-3/4" />
-          <Skeleton className="h-4 w-1/3" />
-          <Skeleton className="h-24 w-full" />
-        </div>
+        <Skeleton className="h-8 w-3/4 mb-2" />
+        <Skeleton className="h-4 w-1/3 mb-4" />
+        <Skeleton className="h-24 w-full" />
       </FeedWrapper>
     );
   }
@@ -134,8 +145,8 @@ export default function PostDetailPage({
 
       <div className="flex items-center justify-between text-sm text-muted-foreground mb-4">
         <span>
-          by {post.author.username} • {post.points} points •{" "}
-          {post.commentsCount} comments • {formattedDate}
+          by {post.author.username} • {post.points} points • {comments.length}{" "}
+          comments • {formattedDate}
         </span>
 
         <div className="flex items-center gap-2">
@@ -158,13 +169,13 @@ export default function PostDetailPage({
         </div>
       </div>
 
-      <p className="text-base whitespace-pre-line">{post.content}</p>
+      <p className="text-base whitespace-pre-line mb-6">{post.content}</p>
 
-      <hr className="my-6" />
-      <h2 className="text-lg font-semibold">Comments (soon)</h2>
-      <p className="text-sm text-muted-foreground">
-        Comment section coming soon...
-      </p>
+      <CommentsThread
+        postId={post.id}
+        comments={comments}
+        setComments={setComments}
+      />
     </FeedWrapper>
   );
 }
