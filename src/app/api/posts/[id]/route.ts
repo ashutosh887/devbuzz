@@ -1,5 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { CommentNode } from "@/types";
+
+function buildCommentTree(
+  comments: CommentNode[],
+  parentId: number | null = null
+): CommentNode[] {
+  return comments
+    .filter((comment) => comment.parentId === parentId)
+    .map((comment) => ({
+      ...comment,
+      replies: buildCommentTree(comments, comment.id),
+    }));
+}
 
 export async function GET(req: NextRequest) {
   try {
@@ -28,25 +41,28 @@ export async function GET(req: NextRequest) {
       where: { id: postId },
       include: {
         author: { select: { username: true } },
-        comments: {
-          where: { parentId: null },
-          orderBy: { createdAt: "desc" },
-          include: {
-            author: { select: { username: true } },
-            replies: {
-              orderBy: { createdAt: "asc" },
-              include: {
-                author: { select: { username: true } },
-              },
-            },
-          },
-        },
       },
     });
 
     if (!post) {
       return NextResponse.json({ error: "Post not found" }, { status: 404 });
     }
+
+    const rawComments = await prisma.comment.findMany({
+      where: { postId },
+      orderBy: { createdAt: "asc" },
+      include: {
+        author: { select: { username: true } },
+      },
+    });
+
+    const allComments: CommentNode[] = rawComments.map((comment) => ({
+      ...comment,
+      author: { username: comment.author.username! },
+      replies: [],
+    }));
+
+    const commentTree = buildCommentTree(allComments);
 
     let userVote: number | null = null;
     if (userId) {
@@ -65,7 +81,7 @@ export async function GET(req: NextRequest) {
       points: post.points,
       createdAt: post.createdAt,
       author: { username: post.author.username },
-      comments: post.comments,
+      comments: commentTree,
       userVote,
     });
   } catch (err) {

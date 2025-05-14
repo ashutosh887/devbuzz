@@ -30,3 +30,14 @@ export type FullPost = {
   commentsCount: number;
   createdAt: string;
 };
+
+export type CommentNode = {
+  id: number;
+  content: string;
+  postId: number;
+  parentId: number | null;
+  createdAt: Date;
+  updatedAt: Date;
+  author: { username: string };
+  replies: CommentNode[];
+};
